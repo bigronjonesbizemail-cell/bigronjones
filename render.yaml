@@ -93,6 +93,33 @@ services:
         sync: false
 
   # ────────────────────────────────────────────────────────────────────────
+  # Static site — React/Vite frontend (frontend/src)
+  # Serves the built SPA on a CDN with instant deploys.
+  # ────────────────────────────────────────────────────────────────────────
+  - type: static_site
+    name: bigronjones-web
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: npm run build
+    publishDirectory: dist
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: VITE_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: VITE_SITE_URL
+        sync: false
+      - key: VITE_GA_ID
+        sync: false
+      - key: VITE_ADMIN_EMAILS
+        sync: false
+
+  # ────────────────────────────────────────────────────────────────────────
   # Cron — daily 7-day trial email scheduler
   # Replaces the old Vercel cron (path /api/cron/email-scheduler @ 06:00 UTC).
   # Note: Render cron jobs run on the Starter plan or above ($1+/mo) —
