@@ -95,6 +95,11 @@ services:
   # ────────────────────────────────────────────────────────────────────────
   # Static site — React/Vite frontend (frontend/src)
   # Serves the built SPA on a CDN with instant deploys.
+  # 
+  # SPA ROUTING: The _redirects file ensures all non-matching routes are
+  # served index.html (200 rewrite, not redirect). React Router handles the
+  # actual routing on the client. This allows /auth/callback and all other
+  # client routes to work correctly instead of returning 404.
   # ────────────────────────────────────────────────────────────────────────
   - type: static_site
     name: bigronjones-web
