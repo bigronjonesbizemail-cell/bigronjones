@@ -1,9 +1,11 @@
 # 🚀 SPA Routing Fix — Quick Deploy (5 Minutes)
 
 ## Problem
+
 OAuth redirects to `/auth/callback?code=...` but shows "Not Found"
 
 ## Root Cause
+
 Render static sites need a rewrite rule to serve `index.html` for all non-existent paths so React Router can handle them.
 
 ## Solution Applied ✅
@@ -11,9 +13,11 @@ Render static sites need a rewrite rule to serve `index.html` for all non-existe
 ### File Changes
 
 **1. Created: `frontend/public/_redirects`**
+
 ```
 /* /index.html 200
 ```
+
 This tells Render: "Any route that isn't a static file → serve index.html (with 200 OK, not redirect)"
 
 **2. Updated: `render.yaml`**
@@ -43,6 +47,7 @@ Render will rebuild in ~2 minutes.
 ## If It Still Shows 404
 
 Check Render Dashboard:
+
 1. Service: **bigronjones-web**
 2. Click **Shell** tab
 3. Run: `ls -la dist/` (verify `_redirects` exists)
@@ -73,7 +78,6 @@ AuthCallback component renders ✅
 ✅ `/auth/callback` — OAuth callback  
 ✅ `/auth/callback?code=...` — OAuth with code  
 ✅ `/dashboard` — Protected pages  
-✅ `/admin/*` — Admin pages  
+✅ `/admin/*` — Admin pages
 
 Done! OAuth should work now.
-

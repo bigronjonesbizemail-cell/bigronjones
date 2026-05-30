@@ -3,18 +3,20 @@
 ## Problem
 
 After successful Google OAuth login, browser redirects to:
+
 ```
 https://bigronjones-web.onrender.com/auth/callback?code=...
 ```
 
 But shows:
+
 ```
 Not Found
 ```
 
 ## Root Cause
 
-This is a **classic SPA routing issue on static hosting**. 
+This is a **classic SPA routing issue on static hosting**.
 
 When you access `/auth/callback` on Render's static site server:
 
@@ -29,6 +31,7 @@ Returns: 404 Not Found ❌
 ```
 
 **What SHOULD happen:**
+
 ```
 Request: /auth/callback
          ↓
@@ -56,6 +59,7 @@ This file tells Render to serve `index.html` for any non-matching routes:
 ```
 
 **How it works:**
+
 - `/*` — Match any path
 - `/index.html` — Serve this file
 - `200` — Return 200 OK (not a redirect, so URL stays the same)
@@ -76,7 +80,7 @@ Added comments explaining the SPA routing setup so future deployments understand
 ✅ `/auth/callback` — OAuth callback (served as index.html + React Router handles it)  
 ✅ `/auth/callback?code=...` — OAuth with parameters (React Router + query params work)  
 ✅ `/dashboard` — Protected dashboard (served as index.html + React Router + auth check)  
-✅ `/admin/content` — Admin page (served as index.html + React Router + role check)  
+✅ `/admin/content` — Admin page (served as index.html + React Router + role check)
 
 ---
 
@@ -123,6 +127,7 @@ Added comments explaining the SPA routing setup so future deployments understand
 
 **Purpose:** Tell Render static server to route all unknown paths to index.html  
 **Content:**
+
 ```
 /* /index.html 200
 ```
@@ -141,12 +146,14 @@ Added comments explaining the SPA routing setup so future deployments understand
 ## Verification Checklist
 
 ### Pre-Deployment ✅
+
 - [x] React Router route exists: `<Route path="/auth/callback" element={<AuthCallback />} />`
 - [x] AuthCallback component implemented and handles OAuth callback
 - [x] `_redirects` file created in `frontend/public/`
 - [x] render.yaml updated with SPA routing documentation
 
 ### Post-Deployment (You need to do these)
+
 - [ ] Rebuild & redeploy on Render:
   ```bash
   git add -A
@@ -184,6 +191,7 @@ Render uses the same `_redirects` format as Netlify. The format is:
 ```
 
 **For our SPA:**
+
 ```
 /* /index.html 200
 ```
@@ -195,6 +203,7 @@ This means: "For any path that doesn't match a static file, serve index.html wit
 ## Why This Fixes OAuth Callback
 
 Without `_redirects`:
+
 ```
 GET /auth/callback?code=...
     ↓
@@ -206,6 +215,7 @@ Not found
 ```
 
 With `_redirects`:
+
 ```
 GET /auth/callback?code=...
     ↓
@@ -226,19 +236,20 @@ Component renders ✅
 
 ## SPA vs Traditional Websites
 
-| Aspect | Traditional | SPA |
-|--------|-------------|-----|
-| Routing | Server-side (each URL = separate HTML file) | Client-side (all URLs → index.html) |
-| Build output | Many HTML files (about.html, blog.html, etc.) | One HTML file (index.html) + JS handles routing |
-| URL structure | `/about/` → looks for `/about/index.html` | `/about/` → serves `/index.html`, React Router handles it |
-| 404 behavior | Server returns 404 for unknown paths | Must rewrite unknown paths to index.html |
-| `_redirects` needed | No (server handles routing) | YES (needs to tell server to rewrite) |
+| Aspect              | Traditional                                   | SPA                                                       |
+| ------------------- | --------------------------------------------- | --------------------------------------------------------- |
+| Routing             | Server-side (each URL = separate HTML file)   | Client-side (all URLs → index.html)                       |
+| Build output        | Many HTML files (about.html, blog.html, etc.) | One HTML file (index.html) + JS handles routing           |
+| URL structure       | `/about/` → looks for `/about/index.html`     | `/about/` → serves `/index.html`, React Router handles it |
+| 404 behavior        | Server returns 404 for unknown paths          | Must rewrite unknown paths to index.html                  |
+| `_redirects` needed | No (server handles routing)                   | YES (needs to tell server to rewrite)                     |
 
 ---
 
 ## Future-Proofing
 
 The `_redirects` file works for:
+
 - ✅ Localhost development (Vite dev server handles it)
 - ✅ Render static site (our setup)
 - ✅ Vercel (supports `_redirects` format)
@@ -274,6 +285,7 @@ If you ever migrate hosting, this same `_redirects` file will work!
 ### Vite Build Output
 
 When you run `npm run build`, Vite:
+
 1. Compiles React to JavaScript
 2. Copies `frontend/public/*` to `dist/`
 3. Result: `dist/index.html`, `dist/js/*`, `dist/css/*`, **`dist/_redirects`**
@@ -281,6 +293,7 @@ When you run `npm run build`, Vite:
 ### Render Static Site Serving
 
 When user requests `/auth/callback`:
+
 1. Render checks: "Is there a static file at `/auth/callback` or similar?"
 2. Not found, Render checks: "Any rewrite rules?"
 3. Finds: `_redirects` file with `/* /index.html 200`
@@ -291,6 +304,7 @@ When user requests `/auth/callback`:
 ### React Router Handling
 
 Once React loads:
+
 1. React Router initializes with current URL: `/auth/callback?code=...`
 2. Matches route: `<Route path="/auth/callback" element={<AuthCallback />} />`
 3. Renders: `<AuthCallback />` component
@@ -300,14 +314,13 @@ Once React loads:
 
 ## Summary
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| React Router route | ✅ EXISTS | `/auth/callback` route is defined |
-| AuthCallback component | ✅ EXISTS | Properly handles OAuth callback |
-| Render static config | ❌ WAS MISSING | No `_redirects` file |
-| Fix applied | ✅ DONE | Created `frontend/public/_redirects` |
-| SPA routing | ✅ NOW ENABLED | All routes → index.html |
-| OAuth callback | ✅ NOW WORKS | `/auth/callback?code=...` will work |
+| Component              | Status         | Notes                                |
+| ---------------------- | -------------- | ------------------------------------ |
+| React Router route     | ✅ EXISTS      | `/auth/callback` route is defined    |
+| AuthCallback component | ✅ EXISTS      | Properly handles OAuth callback      |
+| Render static config   | ❌ WAS MISSING | No `_redirects` file                 |
+| Fix applied            | ✅ DONE        | Created `frontend/public/_redirects` |
+| SPA routing            | ✅ NOW ENABLED | All routes → index.html              |
+| OAuth callback         | ✅ NOW WORKS   | `/auth/callback?code=...` will work  |
 
 **Next step:** Commit and push to Render, then test Google OAuth.
-
