@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://bigronjones-k484.onrender.com/api/:path*"
+      "destination": "https://bigronjones-39pm.onrender.com/api/:path*"
     },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
