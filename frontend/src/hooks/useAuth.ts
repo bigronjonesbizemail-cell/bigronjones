@@ -23,6 +23,23 @@ export type UseAuthReturn = AuthState & {
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
 };
 
+/**
+ * Get the site origin for OAuth redirects and email links.
+ *
+ * Priority order:
+ *   1. VITE_SITE_URL env var (set on Render Dashboard → bigronjones-web → Environment)
+ *   2. window.location.origin (fallback: http://localhost:3000 or custom domain)
+ *   3. empty string (for SSR/tests)
+ *
+ * CRITICAL: The returned URL must be registered in:
+ *   - Supabase: Authentication → URL Configuration → Redirect URLs
+ *   - Google Cloud: OAuth 2.0 Client ID → Authorized redirect URIs
+ *
+ * Example return values:
+ *   - Local dev: http://localhost:3000
+ *   - Render: https://bigronjones-web.onrender.com
+ *   - Custom: https://your-domain.com
+ */
 function siteOrigin(): string {
   const fromEnv = import.meta.env.VITE_SITE_URL as string | undefined;
   if (fromEnv) return fromEnv.replace(/\/$/, "");
@@ -117,11 +134,28 @@ export function useAuth(): UseAuthReturn {
       ? `${origin}/auth/callback?redirect=${encodeURIComponent(safeRedirect)}`
       : `${origin}/auth/callback`;
 
-    // Debug logging
-    console.log("[useAuth] Google OAuth:", {
-      supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-      siteOrigin: origin,
+    // Debug logging - critical for troubleshooting OAuth redirect mismatches
+    // If redirectTo doesn't match Supabase/Google configs, OAuth will redirect to wrong domain
+    console.log("[useAuth] Google OAuth - Verifying redirect configuration:", {
+      // Environment variable (set in Render Dashboard)
+      VITE_SITE_URL: import.meta.env.VITE_SITE_URL,
+      // Browser-detected origin (fallback)
+      detected_origin:
+        typeof window !== "undefined" ? window.location.origin : "(SSR)",
+      // Supabase project URL
+      VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+      // FINAL: OAuth redirect URL (must match Supabase + Google configs)
       redirectTo: redirectTo,
+      diagnostic: {
+        issue:
+          "If OAuth redirects to old Vercel URL, redirectTo doesn't match registered URLs",
+        fix_1:
+          "Update Render → bigronjones-web → Environment → set VITE_SITE_URL=https://bigronjones-web.onrender.com",
+        fix_2:
+          "Update Supabase Dashboard → Authentication → URL Configuration → add redirectTo URL",
+        fix_3:
+          "Update Google Cloud → OAuth 2.0 Client → Authorized redirect URIs → add redirectTo URL",
+      },
     });
 
     const { error } = await supabase.auth.signInWithOAuth({
